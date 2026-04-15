@@ -18,9 +18,9 @@ export default async function handler(req, res) {
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
-        refresh_token: "KeLKzSR5HGgAAAAAAAAAAUTWXSPbpu_4LuFAAsexJrv7Bg2f-3pGOyM-sL3OnfsI",
-        client_id: "nuqf79c45gseulw",
-        client_secret: "fbe6jrqjtfii8tk"
+        refresh_token: process.env.REFRESH_TOKEN,
+        client_id: process.env.APP_KEY,
+        client_secret: process.env.APP_SECRET
       })
     });
 
