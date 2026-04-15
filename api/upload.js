@@ -2,7 +2,6 @@ export default async function handler(req, res) {
   try {
     const { file, name } = req.body;
 
-    // 1. refresh token → access token
     const tokenRes = await fetch("https://api.dropboxapi.com/oauth2/token", {
       method: "POST",
       headers: {
@@ -10,16 +9,15 @@ export default async function handler(req, res) {
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
-        refresh_token: process.env.REFRESH_TOKEN,
-        client_id: process.env.APP_KEY,
-        client_secret: process.env.APP_SECRET
+        refresh_token: "KeLKzSR5HGgAAAAAAAAAAUTWXSPbpu_4LuFAAsexJrv7Bg2f-3pGOyM-sL3OnfsI",
+        client_id: "nuqf79c45gseulw",
+        client_secret: "fbe6jrqjtfii8tk"
       })
     });
 
     const tokenData = await tokenRes.json();
     const access_token = tokenData.access_token;
 
-    // 2. dosya yükle
     const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
       method: "POST",
       headers: {
@@ -36,9 +34,13 @@ export default async function handler(req, res) {
 
     const data = await uploadRes.json();
 
-    res.status(200).json({ success: true, data });
+    if (!uploadRes.ok) {
+      return res.status(500).json(data);
+    }
+
+    res.status(200).json({ success: true });
 
   } catch (e) {
-    res.status(500).json({ error: "upload failed" });
+    res.status(500).json({ error: e.toString() });
   }
 }
