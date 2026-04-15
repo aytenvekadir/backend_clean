@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       })
     });
 
+    
     const tokenData = await tokenRes.json();
     const access_token = tokenData.access_token;
 
