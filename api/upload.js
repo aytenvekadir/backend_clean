@@ -9,7 +9,12 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   try {
-    const { file, name } = req.body;
+    const { file, name, type, filename } = req.body;
+const folder = type || "images";
+const user = name || "misafir";
+const finalName = filename || Date.now();
+
+const path = `/${folder}/${user}/${finalName}`;
 
     const tokenRes = await fetch("https://api.dropboxapi.com/oauth2/token", {
       method: "POST",
@@ -33,7 +38,7 @@ export default async function handler(req, res) {
       headers: {
         "Authorization": `Bearer ${access_token}`,
         "Dropbox-API-Arg": JSON.stringify({
-          path: `/${name || "misafir"}/${Date.now()}.jpg`,
+          path: path,
           mode: "add",
           autorename: true
         }),
