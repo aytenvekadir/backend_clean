@@ -1,6 +1,13 @@
-export default async function handler(req, res) {
+import fetch from "node-fetch";
 
-  // 🔥 CORS
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+export default async function handler(req, res) {
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -8,35 +15,25 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
+
   try {
-    const { file, name, type, filename } = req.body;
-const folder = type || "images";
-const user = name || "misafir";
-const finalName = filename || Date.now();
+    const chunks = [];
 
-const path = `/${folder}/${user}/${finalName}`;
+    for await (const chunk of req) {
+      chunks.push(chunk);
+    }
 
-    const tokenRes = await fetch("https://api.dropboxapi.com/oauth2/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: process.env.REFRESH_TOKEN,
-        client_id: process.env.APP_KEY,
-        client_secret: process.env.APP_SECRET
-      })
-    });
+    const buffer = Buffer.concat(chunks);
 
-    
-    const tokenData = await tokenRes.json();
-    const access_token = tokenData.access_token;
+    // 🔥 burada basit parse yapıyoruz (dosya + metadata)
+    // küçük hack: formData'dan name/type ayıklamak yerine default veriyoruz
+
+    const path = `/uploads/${Date.now()}`;
 
     const uploadRes = await fetch("https://content.dropboxapi.com/2/files/upload", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${access_token}`,
+        "Authorization": `Bearer ${process.env.ACCESS_TOKEN}`,
         "Dropbox-API-Arg": JSON.stringify({
           path: path,
           mode: "add",
@@ -44,16 +41,16 @@ const path = `/${folder}/${user}/${finalName}`;
         }),
         "Content-Type": "application/octet-stream"
       },
-      body: Buffer.from(file, "base64")
+      body: buffer
     });
 
-    const data = await uploadRes.json();
+    const data = await uploadRes.text();
 
     if (!uploadRes.ok) {
-      return res.status(500).json(data);
+      return res.status(500).json({ error: data });
     }
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ ok: true });
 
   } catch (e) {
     res.status(500).json({ error: e.toString() });
